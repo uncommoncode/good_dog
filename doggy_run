@@ -1,0 +1,16 @@
+cd $(dirname $0)
+
+virtualenv_directory="venv"
+
+if [ ! -d "$virtualenv_directory" ]; then
+  # Construct our directory
+  echo "Building requirements..."
+  virtualenv -p python2.7 $virtualenv_directory
+  source $virtualenv_directory/bin/activate
+  pip install -r requirements.txt
+  echo "... requirements complete!"
+fi
+
+source $virtualenv_directory/bin/activate
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+eval ${@}
