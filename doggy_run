@@ -2,15 +2,36 @@ cd $(dirname $0)
 
 virtualenv_directory="venv"
 
+# Create a virtualenv if we dont have one.
 if [ ! -d "$virtualenv_directory" ]; then
   # Construct our directory
   echo "Building requirements..."
   virtualenv -p python2.7 $virtualenv_directory
   source $virtualenv_directory/bin/activate
   pip install -r requirements.txt
+  openssl md5 requirements.txt > requirements.install
   echo "... requirements complete!"
 fi
 
 source $virtualenv_directory/bin/activate
+if [ ! -f requirements.install ]
+then
+  touch requirements.install
+fi
+
+# Upgrade pip if we have new requirements.
+current_requirements="$(openssl md5 requirements.txt)"
+installed_requirements="$(cat requirements.install)"
+if [ "$current_requirements" != "$installed_requirements" ]
+then
+  echo "Upgrading pip..."
+  pip install -r requirements.txt
+  openssl md5 requirements.txt > requirements.install
+  echo "... upgrade complete!"  
+fi
+
+# Update python path to include good_dog
 export PYTHONPATH=$PYTHONPATH:$(pwd)
+
+# Evaluate the input command.
 eval ${@}
