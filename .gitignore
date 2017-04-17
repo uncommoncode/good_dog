@@ -87,3 +87,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Project settings
+.idea/
+notebooks/cache/
+requirements.install
+*.swp
