@@ -6,7 +6,7 @@ virtualenv_directory="venv"
 if [ ! -d "$virtualenv_directory" ]; then
   # Construct our directory
   echo "Building requirements..."
-  virtualenv -p python2.7 $virtualenv_directory
+  virtualenv -p python3 $virtualenv_directory
   source $virtualenv_directory/bin/activate
   pip install -r requirements.txt
   openssl md5 requirements.txt > requirements.install

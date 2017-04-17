@@ -1,6 +1,6 @@
 import numpy as np
 import os
-import cPickle as pickle
+import pickle
 import keras.backend as K
 from keras.applications import vgg16
 
@@ -40,7 +40,7 @@ def save_features_and_labels(model, generator, directory, target_size, batch_siz
     batch_count = count // batch_size
     features = []
     labels = []
-    for batch in xrange(batch_count):
+    for batch in range(batch_count):
         batch_X, batch_y = flow.next()
         batch_features = model.predict(batch_X, batch_size=batch_size)
         features.append(batch_features)
@@ -145,7 +145,7 @@ class ClassActivationMap(object):
 
         total_activation = np.zeros(dtype=np.float32, shape=map_shape)
 
-        for class_index in xrange(self.class_weights.shape[1]):
+        for class_index in range(self.class_weights.shape[1]):
             class_activation_map = np.zeros(dtype=np.float32, shape=map_shape)
             for feature_index, weights in enumerate(self.class_weights[:, class_index]):
                 class_activation_map += weights * conv_output[0, :, :, feature_index]
