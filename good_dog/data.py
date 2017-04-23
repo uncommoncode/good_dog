@@ -38,11 +38,11 @@ def load_training_test_sample(data_iterator, sample_size=None, test_pct=0.2):
         data_iterator = iter(data)
     test_size = int(sample_size * test_pct)
     training_size = sample_size - test_size
-    for i in xrange(training_size):
+    for i in range(training_size):
         image_path, label = data_iterator.next()
         training_images.append(image_path)
         training_labels.append(label)
-    for i in xrange(test_size):
+    for i in range(test_size):
         image_path, label = data_iterator.next()
         test_images.append(image_path)
         test_labels.append(label)
