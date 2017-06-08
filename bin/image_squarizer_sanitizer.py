@@ -1,43 +1,47 @@
-# Goal: This script is used to inspect the image size so we can figure out the best size to normalize at
-#       This can also be used to calculate the amount of images with mapfile
-# TODO: Make this script so that I can customize the resolution, and it removes the ones that does not meet resolution requirements
-#       Get rid of images without map file
-# Result: I have decided using this script to settle on a resolution of 256x256
-#         Verified that map file and original image have the same resolution
+# Goal: This script is used to pad the images into squares with black pixels
+#       And this saves the images and their corresponding mask files into another directory: output_dir
+# Requirements: Directory needs to be clean - just with qualifying jpgs with their corresponding mapfiles
+#               i.e., Image: _image_.jpg --> Mask file: _image_.mask.0.png
 
-# This only takes images with a mask file - with labeled data
 
 from PIL import Image
 import os
 
-def get_num_pixels(file_path):
-  width, height = Image.open(file_path).size
-  return (width, height)
+output_dir = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "output")
+if not os.path.exists(output_dir):
+  os.makedirs(output_dir)
 
-def analyze_directory(directory_path):
+def pad_images_from_directory(directory_path):
   directory = os.fsencode(directory_path)
-  count = 0
   for file in os.listdir(directory):
     file_name = os.fsdecode(file)
     if file_name.endswith(".jpg"):
-      file_name_wo_extension = os.path.splitext(file_name)[0] 
-      map_name = file_name_wo_extension + ".mask.0.png"
-
-      map_path = os.path.join(directory_path,  map_name)
       file_path = os.path.join(directory_path, file_name)
-      if os.path.exists(map_path):
-        count = count + 1
-        print(file_name + " : " + map_name)
-        file_w, file_h = get_num_pixels(file_path)
-        if width < 256 or height < 256:
-          print("     Error: size invalid; please remove")
-        # map_file_w, map_file_h = get_num_pixels(map_path)
-        print("file width: " + str(file_w) + "; file height: " + str(file_h))
-        # print("map_file width: " + str(map_file_w) + "; map_file height: " + str(map_file_h))
-  print("total count: " + str(count))
-
+      file_name_wo_extension = os.path.splitext(file_name)[0]
+      map_name = file_name_wo_extension + ".mask.0.png"
+      map_file_path = os.path.join(directory_path, map_name)
+      if os.path.exists(map_file_path):
+        print("Padding image and map: " + file_name_wo_extension)
+        img = Image.open(file_path)
+        msk = Image.open(map_file_path)
+        fw, fh = img.size 
+        pad_image(fw, fh, img, file_name, directory_path)
+        pad_image(fw, fh, msk, map_name, directory_path)
+    
+def pad_image(fw, fh, img, filename, directory_path):
+  new_size = (max(fw, fh), max(fw, fh))
+  new_im = Image.new("RGB", new_size)
+  new_im.paste(img, (0, 0))
+  newfilename = os.path.splitext(filename)[0] + "_new.jpg"
+  newfilepath = os.path.join(output_dir, newfilename)
+  print("Saving: " + newfilename)
+  try:
+    new_im.save(newfilepath)
+  except IOError:
+    print("Error: cannot save for" + newfilepath)
+  
+  
 directory_path = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "cat+face")
 print(directory_path)
 
-analyze_directory(directory_path)
-
+pad_images_from_directory(directory_path)
