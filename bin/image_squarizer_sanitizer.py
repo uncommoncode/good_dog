@@ -1,5 +1,7 @@
 # Goal: This script is used to inspect the image size so we can figure out the best size to normalize at
 #       This can also be used to calculate the amount of images with mapfile
+# TODO: Make this script so that I can customize the resolution, and it removes the ones that does not meet resolution requirements
+#       Get rid of images without map file
 # Result: I have decided using this script to settle on a resolution of 256x256
 #         Verified that map file and original image have the same resolution
 
@@ -10,9 +12,7 @@ import os
 
 def get_num_pixels(file_path):
   width, height = Image.open(file_path).size
-  if width < 256 or height < 256:
-    print("     Error: size invalid; please remove")
-  return (str(width), str(height))
+  return (width, height)
 
 def analyze_directory(directory_path):
   directory = os.fsencode(directory_path)
@@ -29,9 +29,11 @@ def analyze_directory(directory_path):
         count = count + 1
         print(file_name + " : " + map_name)
         file_w, file_h = get_num_pixels(file_path)
+        if width < 256 or height < 256:
+          print("     Error: size invalid; please remove")
         # map_file_w, map_file_h = get_num_pixels(map_path)
-        print("file width: " + file_w + "; file height: " + file_h)
-        # print("map_file width: " + map_file_w + "; map_file height: " + map_file_h)
+        print("file width: " + str(file_w) + "; file height: " + str(file_h))
+        # print("map_file width: " + str(map_file_w) + "; map_file height: " + str(map_file_h))
   print("total count: " + str(count))
 
 directory_path = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "cat+face")
