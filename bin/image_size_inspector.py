@@ -1,7 +1,6 @@
 # Goal: This script is used to inspect the image size so we can figure out the best size to normalize at
 #       This can also be used to calculate the amount of images with mapfile
-# TODO: Make this script so that I can customize the resolution, and it removes the ones that does not meet resolution requirements
-#       Get rid of images without map file
+# TODO: Make this script so that I can customize the resolution
 # Result: I have decided using this script to settle on a resolution of 256x256
 #         Verified that map file and original image have the same resolution
 
