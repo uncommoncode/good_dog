@@ -4,10 +4,11 @@
 # Requirements: Directory needs to be clean - just with qualifying jpgs with their corresponding mapfiles
 #               i.e., Image: _image_.jpg --> Mask file: _image_.mask.0.png
 
-
 from PIL import Image
+from colour import Color
 import os
 import argparse
+import random
 
 OUTPUT = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "output")
 INPUT = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "cat+face")
@@ -30,28 +31,40 @@ def get_arguments():
   return parser.parse_args()
 
 def pad_images_from_directory(directory_path, output_path, new_size):
-  directory = os.fsencode(directory_path)
-  for file in os.listdir(directory):
-    file_name = os.fsdecode(file)
+  count = 0
+  for file_name in os.listdir(directory_path):
     if file_name.endswith(".jpg"):
       file_path = os.path.join(directory_path, file_name)
       file_name_wo_extension = os.path.splitext(file_name)[0]
       map_name = file_name_wo_extension + ".mask.0.png"
       map_file_path = os.path.join(directory_path, map_name)
       if os.path.exists(map_file_path):
+        count = count + 1
         print("Padding image and map: " + file_name_wo_extension)
         img = Image.open(file_path)
         msk = Image.open(map_file_path)
         size = (max(img.size), max(img.size))
         pad_image(size, new_size, img, file_name, output_path)
-        binarizeImage(msk, msk.size, map_file_path)
+        msk = binarize_image(msk, msk.size, map_file_path)
         pad_image(size, new_size, msk, map_name, output_path)
+  print("There are " + str(count) + " images")
+
+def get_white_noise_image(width, height):
+  pil_map = Image.new("RGB", (width, height))
+  random_grid = map(lambda x: (int(random.random() * 256), int(random.random() * 256), int(random.random() * 256)), [0] * width * height)
+  pil_map.putdata(list(random_grid), scale=1, offset=0)
+  return pil_map
     
 def pad_image(size, new_size, img, filename, directory_path):
   new_im = Image.new("RGB", size)
   new_im.paste(img, (0, 0))
-  # Question: not sure if nearest is the best option here
-  new_im = new_im.resize((new_size, new_size), Image.NEAREST)
+  n_width = size[0]-img.size[0] if size[0] > img.size[0] else img.size[0]
+  n_height = size[1]-img.size[1] if size[1] > img.size[1] else img.size[1]
+  anchor_x = img.size[0] if size[0] > img.size[0] else 0
+  anchor_y = img.size[1] if size[1] > img.size[1] else 0
+  new_im.paste(get_white_noise_image(n_width, n_height), (anchor_x, anchor_y))
+
+  new_im = new_im.resize((new_size, new_size), Image.BICUBIC)
   newfilename = os.path.splitext(filename)[0] + "_new.jpg"
   newfilepath = os.path.join(directory_path, newfilename)
   print("Saving: " + newfilename)
@@ -60,19 +73,19 @@ def pad_image(size, new_size, img, filename, directory_path):
   except IOError:
     print("Error: cannot save for" + newfilepath)
 
-def binarizeImage(img, size, img_path):
+def binarize_image(img, size, img_path):
+  colors = []
+  img = img.convert("RGB")
   pix = img.load()
   for x in range(size[0]):
     for y in range(size[1]):
       color = pix[x, y]
-      break
-      if 0 != color:
-        pix[x, y] = 1
-      else:
-        pix[x, y] = 0
-  # This below line NEEDS be commented OR deleted. Damn it learned it the hard way
-  # img.show()
-  img.save(img_path)
+      if color not in colors:
+        colors.append(color)
+      if (0, 0, 0) != color:
+        pix[x, y] = (0, 150, 0)
+  img = img.convert('1')
+  return img
   
 def main():
   args = get_arguments()
