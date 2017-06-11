@@ -14,10 +14,8 @@ def get_num_pixels(file_path):
   return (width, height)
 
 def analyze_directory(directory_path):
-  directory = os.fsencode(directory_path)
   count = 0
-  for file in os.listdir(directory):
-    file_name = os.fsdecode(file)
+  for file_name in os.listdir(directory_path):
     if file_name.endswith(".jpg"):
       file_name_wo_extension = os.path.splitext(file_name)[0] 
       map_name = file_name_wo_extension + ".mask.0.png"

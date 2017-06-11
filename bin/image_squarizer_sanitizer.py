@@ -4,7 +4,6 @@
 # Requirements: Directory needs to be clean - just with qualifying jpgs with their corresponding mapfiles
 #               i.e., Image: _image_.jpg --> Mask file: _image_.mask.0.png
 
-
 from PIL import Image
 import os
 import argparse
@@ -30,9 +29,7 @@ def get_arguments():
   return parser.parse_args()
 
 def pad_images_from_directory(directory_path, output_path, new_size):
-  directory = os.fsencode(directory_path)
-  for file in os.listdir(directory):
-    file_name = os.fsdecode(file)
+  for file_name in os.listdir(directory_path):
     if file_name.endswith(".jpg"):
       file_path = os.path.join(directory_path, file_name)
       file_name_wo_extension = os.path.splitext(file_name)[0]
