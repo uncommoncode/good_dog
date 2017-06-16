@@ -5,7 +5,6 @@
 #               i.e., Image: _image_.jpg --> Mask file: _image_.mask.0.png
 
 from PIL import Image
-from colour import Color
 import os
 import argparse
 import random
