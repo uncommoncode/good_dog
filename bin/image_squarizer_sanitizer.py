@@ -5,10 +5,10 @@
 #               i.e., Image: _image_.jpg --> Mask file: _image_.mask.0.png
 
 from PIL import Image
-from colour import Color
 import os
 import argparse
 import random
+import numpy as np
 
 OUTPUT = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "output")
 INPUT = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "cat+face")
@@ -44,9 +44,15 @@ def pad_images_from_directory(directory_path, output_path, new_size):
         img = Image.open(file_path)
         msk = Image.open(map_file_path)
         size = (max(img.size), max(img.size))
-        pad_image(size, new_size, img, file_name, output_path)
-        msk = binarize_image(msk, msk.size, map_file_path)
-        pad_image(size, new_size, msk, map_name, output_path)
+        # pad original image
+        new_im = pad_image(size, new_size, img)
+        save_img(new_im, file_name, output_path)
+
+	# pad original mask
+        new_msk = pad_image(size, new_size, msk, 0)
+        msk = binarize_image(new_msk, new_msk.size, map_file_path)
+        save_img(msk, map_name, output_path)
+
   print("There are " + str(count) + " images")
 
 def get_white_noise_image(width, height):
@@ -55,37 +61,47 @@ def get_white_noise_image(width, height):
   pil_map.putdata(list(random_grid), scale=1, offset=0)
   return pil_map
     
-def pad_image(size, new_size, img, filename, directory_path):
+def pad_image(size, new_size, img, with_white_noise=True):
   new_im = Image.new("RGB", size)
   new_im.paste(img, (0, 0))
-  n_width = size[0]-img.size[0] if size[0] > img.size[0] else img.size[0]
-  n_height = size[1]-img.size[1] if size[1] > img.size[1] else img.size[1]
-  anchor_x = img.size[0] if size[0] > img.size[0] else 0
-  anchor_y = img.size[1] if size[1] > img.size[1] else 0
-  new_im.paste(get_white_noise_image(n_width, n_height), (anchor_x, anchor_y))
+  if with_white_noise:
+    n_width = size[0]-img.size[0] if size[0] > img.size[0] else img.size[0]
+    n_height = size[1]-img.size[1] if size[1] > img.size[1] else img.size[1]
+    anchor_x = img.size[0] if size[0] > img.size[0] else 0
+    anchor_y = img.size[1] if size[1] > img.size[1] else 0
+    new_im.paste(get_white_noise_image(n_width, n_height), (anchor_x, anchor_y))
 
   new_im = new_im.resize((new_size, new_size), Image.BICUBIC)
-  newfilename = os.path.splitext(filename)[0] + "_new.jpg"
-  newfilepath = os.path.join(directory_path, newfilename)
-  print("Saving: " + newfilename)
-  try:
-    new_im.save(newfilepath)
-  except IOError:
-    print("Error: cannot save for" + newfilepath)
+  return new_im
 
-def binarize_image(img, size, img_path):
-  colors = []
-  img = img.convert("RGB")
-  pix = img.load()
-  for x in range(size[0]):
-    for y in range(size[1]):
-      color = pix[x, y]
-      if color not in colors:
-        colors.append(color)
-      if (0, 0, 0) != color:
-        pix[x, y] = (0, 150, 0)
-  img = img.convert('1')
-  return img
+def save_img(img, file_name, output_path):
+  file_name = os.path.splitext(file_name)[0] + "_new.jpg"
+  file_path = os.path.join(output_path, file_name)
+
+  print("Saving: " + file_name)
+  try:
+    img.save(file_path)
+  except IOError:
+    print("Error: cannot save for" + file_path)
+
+def binarize_image(image_file, target_path, threshold):
+    """Binarize an image."""
+    image = image_file.convert('RGB')  # convert image to monochrome
+    image = np.array(image)
+    image = binarize_array(image, 0)
+    img = Image.fromarray(image, 'RGB')
+    img = img.convert('L')
+    # img.show()
+    return img
+
+def binarize_array(numpy_array, threshold=200):
+  for i in range(len(numpy_array)):
+    for j in range(len(numpy_array[0])):
+      if numpy_array[i][j][0] > 0 or numpy_array[i][j][1] > 0:
+        numpy_array[i][j] = (255, 255, 255)
+      else:
+        numpy_array[i][j] = (0, 0, 0)
+  return numpy_array
   
 def main():
   args = get_arguments()
