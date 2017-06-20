@@ -26,6 +26,6 @@ def consolidate_file_from_directory(directory, o_dir):
       writer.writerow(row)
     print("Total image count: ", str(count))
 
-# consolidate_file_from_directory(os.path.join(os.path.dirname(os.getcwd()), "Pictures", "train"), os.path.join(os.path.dirname(os.getcwd()), "Pictures", "train.csv"))
+consolidate_file_from_directory(os.path.join(os.path.dirname(os.getcwd()), "Pictures", "train"), os.path.join(os.path.dirname(os.getcwd()), "Pictures", "train.csv"))
 consolidate_file_from_directory(os.path.join(os.path.dirname(os.getcwd()), "Pictures", "test"), os.path.join(os.path.dirname(os.getcwd()), "Pictures","test.csv"))
 
