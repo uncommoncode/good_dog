@@ -1,6 +1,9 @@
-# Goal: This script is used to pad the images into squares with black pixels
+# Goal: This script takes in the input folder that could have many different images (w or w/o masks)
+#       It then looks at each file and take out the ones that have masks and then
+#       pad the images into squares with random whitenoise pixels
 #       This also normalizes the mask image into 0 and 1s, instead of colors
-#       And this saves the images and their corresponding mask files into another directory: output_dir
+#       This saves the images and their corresponding mask files into another directory: train_dir
+#       This then moves test_num number of <img, msk> pairs into another directory: test_dir
 # Requirements: Directory needs to be clean - just with qualifying jpgs with their corresponding mapfiles
 #               i.e., Image: _image_.jpg --> Mask file: _image_.mask.0.png
 
@@ -13,9 +16,9 @@ import numpy as np
 
 current_time = strftime("%Y-%m-%d %H:%M:%S", gmtime()) 
 total_image_count = 0
-TRAIN = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "train", current_time)
+TRAIN = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "train_"+current_time)
 INPUT = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "cat+face")
-TEST = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "test", current_time)
+TEST = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "test_"+current_time)
 
 class readable_dir(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
