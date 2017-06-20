@@ -5,17 +5,26 @@
 #               i.e., Image: _image_.jpg --> Mask file: _image_.mask.0.png
 
 from PIL import Image
+from time import gmtime, strftime
 import os
 import argparse
 import random
 import numpy as np
 
-OUTPUT = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "output")
+current_time = strftime("%Y-%m-%d %H:%M:%S", gmtime()) 
+total_image_count = 0
+TRAIN = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "train", current_time)
 INPUT = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "cat+face")
+TEST = os.path.join(os.path.dirname(os.getcwd()), "Pictures", "test", current_time)
 
 class readable_dir(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         prospective_dir = values
+        if not os.path.exists(prospective_dir):
+            print("Making new directory:{0}".format(prospective_dir))
+            os.makedirs(prospective_dir)
+            return
+
         if not os.path.isdir(prospective_dir):
             raise argparse.ArgumentTypeError("readable_dir:{0} is not a valid path".format(prospective_dir))
         if os.access(prospective_dir, os.R_OK):
@@ -26,8 +35,10 @@ class readable_dir(argparse.Action):
 def get_arguments():
   parser = argparse.ArgumentParser(description="Sanize good dog cat dataset. :P")
   parser.add_argument('-i', '--input_dir', action=readable_dir, default=INPUT)
-  parser.add_argument('-o', '--output_dir', action=readable_dir, default=OUTPUT)
+  parser.add_argument('-o', '--output_dir', action=readable_dir, default=TRAIN)
   parser.add_argument('-s', '--size', type=int, default=256)
+  parser.add_argument('-t', '--test_dir', action=readable_dir, default=TEST)
+  parser.add_argument('-n', '--test_num', type=int, default=78)
   return parser.parse_args()
 
 def pad_images_from_directory(directory_path, output_path, new_size):
@@ -54,6 +65,7 @@ def pad_images_from_directory(directory_path, output_path, new_size):
         save_img(msk, map_name, output_path)
 
   print("There are " + str(count) + " images")
+  total_image_count = count
 
 def get_white_noise_image(width, height):
   pil_map = Image.new("RGB", (width, height))
@@ -102,10 +114,49 @@ def binarize_array(numpy_array, threshold=200):
       else:
         numpy_array[i][j] = (0, 0, 0)
   return numpy_array
+
+def mask_filename_from_orig_filename(file_name):
+  if file_name.endswith(".jpg"):
+    file_name_wo_extension = os.path.splitext(file_name)[0]
+    file_name_deconstructed = file_name_wo_extension.split('_')
+    if len(file_name_deconstructed) == 3:
+      map_name = file_name_deconstructed[0] + "_" + file_name_deconstructed[1] + ".mask.0_new.jpg"
+    elif "cat" in file_name_wo_extension:
+      map_name = file_name_deconstructed[0] + ".mask.0_new.jpg"
+    else:
+      raise Exception
+      print("Error can't parse map file name: {0}".format(file_name))
+  return map_name
+  
+
+def select_test_images(train_dir, num_test):
+  indexes = []
+  files = os.listdir(train_dir)
+  i = 0
+  while i < num_test:
+    random_int = random.randint(0, len(files))
+    if "mask" in files[random_int]:
+      continue
+    if random_int not in indexes:
+      indexes.append(random_int)
+    i += 1
+
+  tests = [files[i] for i in indexes]
+  maps = list(map(mask_filename_from_orig_filename, tests))
+  print(tests+maps)
+  return tests+maps
+
+def move_tests_into_test_folder(train_dir, test_dir, tests):
+  for file in tests:
+    from_file = os.path.join(train_dir, file)
+    to_file = os.path.join(test_dir, file)
+    os.rename(from_file, to_file)
   
 def main():
   args = get_arguments()
-  pad_images_from_directory(args.input_dir, args.output_dir, args.size)
-
+  # pad_images_from_directory(args.input_dir, args.output_dir, args.size)
+  tests = select_test_images(args.output_dir, args.test_num)
+  move_tests_into_test_folder(args.output_dir, args.test_dir, tests)
+  
 if __name__ == '__main__':
   main()
